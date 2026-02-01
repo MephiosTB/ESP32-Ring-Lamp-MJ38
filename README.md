@@ -66,6 +66,10 @@ I programmed the microcontroller itself using ESPHome in Home Assistant.<br>
 The program code is described in the file "ring_light.yaml".<br>
 I'm not very good with yaml, so the code is assembled from "ready-made" elements + neural networks, and may not be optimal.<br>
 
+In the end, in Home Assistant, it looks like this:<br>
+<img width="477" height="200" alt="image" src="https://github.com/user-attachments/assets/c4fc7dc4-b355-4ba7-97b5-841acb52d4c6" />
+<img width="171" height="200" alt="image" src="https://github.com/user-attachments/assets/fa739407-b881-4541-8430-04739f58aaf0" />
+
 <hr>
 <hr>
 
@@ -137,3 +141,7 @@ I'm not very good with yaml, so the code is assembled from "ready-made" elements
 Саму мк я программировал через ESPHome в Home Assistant.
 Код программы описан в файле "ring_light.yaml".
 С yaml я не очень, по этому код собран из "готовых" элементов + нейросети, и может быть не оптимальным.
+
+В итоге в Home Assistant, это выглядит так:<br>
+<img width="477" height="200" alt="image" src="https://github.com/user-attachments/assets/c4fc7dc4-b355-4ba7-97b5-841acb52d4c6" />
+<img width="171" height="200" alt="image" src="https://github.com/user-attachments/assets/fa739407-b881-4541-8430-04739f58aaf0" />
