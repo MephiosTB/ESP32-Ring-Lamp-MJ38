@@ -66,6 +66,9 @@ I programmed the microcontroller itself using ESPHome in Home Assistant.
 The program code is described in the file "ring_light.yaml".
 I'm not very good with yaml, so the code is assembled from "ready-made" elements + neural networks, and may not be optimal.
 
+<hr>
+<hr>
+
 Русский
 
 Это моя первая публиция на GitHub. Я из России, но в основном буду писать на английском (используя собственные знания и переводчик).
@@ -129,6 +132,7 @@ I'm not very good with yaml, so the code is assembled from "ready-made" elements
 Кнопку SW2, которая отвечала за переключени режимов RGB, за запрограммировал на циклично переключение "теплый-холодный" с пополнительными шагами перехода.
 
 Я не делал финальных фотографий - смотрится ужасно. esp32 я разместил в имеющемся корпусе кнопок с доработкой подручными средствами (во славу синей изоленты).
+
 
 Саму мк я программировал через ESPHome в Home Assistant.
 Код программы описан в файле "ring_light.yaml".
