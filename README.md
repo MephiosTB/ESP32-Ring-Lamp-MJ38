@@ -10,7 +10,8 @@ The lamp itself consists of a ring strip containing lines of warm LEDs, cold LED
 <br>
 After troubleshooting and inspecting the components, I discovered a faulty RGB strip and missing markings on the microcontroller.
 
-I didn't bother to investigate the cause of the RGB strip's failure (it had never been used) or find out what microcontroller it uses. I simply desoldered the microcontroller and tested the contact lines, matching their numbers with the markings on the board:
+I didn't bother to investigate the cause of the RGB strip's failure (it had never been used) or find out what microcontroller it uses. 
+I simply desoldered the microcontroller and tested the contact lines, matching their numbers with the markings on the board:
 
 | # | Name | # | Name |
 |---|---|---|---|
