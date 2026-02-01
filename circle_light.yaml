@@ -1,0 +1,288 @@
+substitutions:
+  name: "ring-lamp"
+  friendly_name: Ring Lamp CWWW
+  
+  ota_password: "ChangeMe" # OTA Password, change to yours
+  key_encryption: "ChangeMe" # API Key, change to yours
+  
+  WW: GPIO01 # Warm LED (A)
+  CW: GPIO02 # Cold LED (B)
+
+  SW1: GPIO04 # Switch 1 Mode
+  SW2: GPIO05 # Switch 2 RGB
+  SW3: GPIO06 # Switch 3 On/Off
+  SW4: GPIO07 # Switch 4 Dowm
+  SW5: GPIO08 # Switch 5 Up
+  
+  LED: GPIO09 # Status LED
+  # I got broken RGB strip, reseve pin for it, but don't use
+  # RGB: GPIO15 # RGB LED
+  ledpin: GPIO48 # On board ws2812 led Pin
+  
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  platformio_options:
+    board_build.flash_mode: dio
+  on_boot:
+    - light.turn_on:
+        id: led_ww
+        blue: 70%
+        brightness: 10%
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+  cpu_frequency: 80MHz # this is simple program, no need to use full CPU clock
+
+# Enable logging
+logger:
+  hardware_uart: UART0
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: ${key_encryption}
+  on_client_connected:
+        then:
+          - delay: 50ms
+          - light.turn_off: led_ww
+  on_client_disconnected:
+        then:
+
+ota:
+  platform: esphome
+  password: ${ota_password}
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Esp32-S3-Ring-Lamp" # Name of hotspot ssid
+    password: "12345678" # Pass of hotspot
+
+captive_portal:
+
+button:
+  - platform: restart
+    name: "Restart"
+    id: but_rest
+
+binary_sensor:
+  - platform: gpio
+    # name: "On/Off" # uncomment if need control in HA
+    id: onoffsw
+    pin:
+      number: ${SW3}
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - light.toggle: clight
+
+  - platform: gpio
+    # name: "Brightness Down" # uncomment if need control in HA
+    id: brdownsw
+    pin:
+      number: ${SW4}
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - lambda: |-
+          auto call = id(clight).turn_on();
+          auto br = id(clight).current_values.get_brightness();
+          call.set_brightness(br - 0.2);
+          call.perform();
+  
+  - platform: gpio
+    # name: "Brightness Up" # uncomment if need control in HA
+    id: brupsw
+    pin:
+      number: ${SW5}
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - lambda: |-
+          auto call = id(clight).turn_on();
+          auto br = id(clight).current_values.get_brightness();
+          call.set_brightness(br + 0.2);
+          call.perform();
+  
+  - platform: gpio
+    # name: "Mode" # uncomment if need control in HA
+    id: modesw
+    pin:
+      number: ${SW1}
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      then:
+        - lambda: |-
+            auto call = id(light_mode).make_call();
+            float next_mode = std::fmod(id(light_mode).state + 1, 4);
+            call.set_value(next_mode);
+            call.perform();
+
+
+  - platform: gpio
+    # name: "Mode" # uncomment if need control in HA
+    id: modessw
+    pin:
+      number: ${SW2}
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      then:
+        - lambda: |-
+            auto call = id(light_modes).make_call();
+            float next_mode = std::fmod(id(light_modes).state + 1, 8);
+            call.set_value(next_mode);
+            call.perform();
+
+output:
+  - platform: ledc
+    pin: ${LED}
+    id: gpio_led
+
+  - platform: ledc
+    pin: ${WW}
+    id: gpio_ww
+
+  - platform: ledc
+    pin: ${CW}
+    id: gpio_cw
+
+light:
+  - platform: esp32_rmt_led_strip
+    id: led_ww
+    rgb_order: GRB
+    pin: ${ledpin}
+    num_leds: 4
+    rmt_symbols: 192
+    chipset: ws2812
+
+  - platform: monochromatic
+    output: gpio_led
+    id: LED
+
+  - platform: cwww
+    warm_white: gpio_ww
+    cold_white: gpio_cw
+    name: "Light"
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    id: clight
+    on_turn_on:
+      - light.turn_on: LED
+    on_turn_off:
+      - light.turn_off: LED
+
+number:
+  - platform: template
+    # name: "Mode" # uncomment if need control in HA
+    id: light_mode
+    optimistic: true
+    min_value: 0
+    max_value: 3
+    step: 1
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: 'return x == 0;' # Cold White
+            then:
+              - light.turn_on:
+                  id: clight
+                  color_temperature: 6500 K
+        - if:
+            condition:
+              lambda: 'return x == 1;' # Mix
+            then:
+              - light.turn_on:
+                  id: clight
+                  color_temperature: 4500 K
+        - if:
+            condition:
+              lambda: 'return x == 2;' # Warm White
+            then:
+              - light.turn_on:
+                  id: clight
+                  color_temperature: 2700 K
+        - if:
+            condition:
+              lambda: 'return x == 3;' # Mix
+            then:
+              - light.turn_on:
+                  id: clight
+                  color_temperature: 4500 K
+
+  - platform: template
+    # name: "Mode 2" # uncomment if need control in HA
+    id: light_modes
+    optimistic: true
+    min_value: 0
+    max_value: 7
+    step: 1
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: 'return x == 0;' # Cold White
+            then:
+              - light.turn_on:
+                  id: clight
+                  color_temperature: 6500 K
+        - if:
+            condition:
+              lambda: 'return x == 1;' # Mix Warm
+            then:
+              - light.turn_on:
+                  id: clight
+                  color_temperature: 5500 K
+        - if:
+            condition:
+              lambda: 'return x == 2;' # Mix
+            then:
+              - light.turn_on:
+                  id: clight
+                  color_temperature: 4500 K
+        - if:
+            condition:
+              lambda: 'return x == 3;' # Mix Cold
+            then:
+              - light.turn_on:
+                  id: clight
+                  color_temperature: 3500 K
+        - if:
+            condition:
+              lambda: 'return x == 4;' # Warm White
+            then:
+              - light.turn_on:
+                  id: clight
+                  color_temperature: 2700 K
+        - if:
+            condition:
+              lambda: 'return x == 5;' # Mix Cold
+            then:
+              - light.turn_on:
+                  id: clight
+                  color_temperature: 3500 K
+        - if:
+            condition:
+              lambda: 'return x == 6;' # Mix
+            then:
+              - light.turn_on:
+                  id: clight
+                  color_temperature: 4500 K
+        - if:
+            condition:
+              lambda: 'return x == 7;' # Mix Warm
+            then:
+              - light.turn_on:
+                  id: clight
+                  color_temperature: 5500 K
